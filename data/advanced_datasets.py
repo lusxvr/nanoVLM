@@ -19,6 +19,7 @@ class ConstantLengthDataset(IterableDataset):
         queue_size: int = 2,
         max_images_per_example: int = 4,
         max_images_per_knapsack: int = 18,
+        dataset_subsample_step: int = 1,
     ):
         self.dataset = dataset
         self.max_sample_length = max_sample_length
@@ -33,6 +34,7 @@ class ConstantLengthDataset(IterableDataset):
         self._average_length_per_sample = (
             self.dataset.mp_image_token_length + 198
         )  # 198 is the average tokens for the cauldron dataset
+        self.dataset_subsample_step = dataset_subsample_step
 
     def __len__(self):
         return int(
@@ -110,6 +112,8 @@ class ConstantLengthDataset(IterableDataset):
             buffer, buffer_len = [], 0
             while buffer_len < self.max_length:
                 try:
+                    for _ in range(self.dataset_subsample_step - 1):
+                        _ = next(iterator)
                     sample = next(iterator)
                 except StopIteration:
                     if self.infinite:
